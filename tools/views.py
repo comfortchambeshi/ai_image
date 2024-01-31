@@ -61,7 +61,7 @@ def fetch_images(request):
 
     if request.method == 'POST' and request.is_ajax():
         prompt = request.POST.get('prompt')
-        api_key = ""
+        api_key = "Your_openai_api_key"
         url = "https://api.openai.com/v1/images/generations"
         headers = {
             "Content-Type": "application/json",
