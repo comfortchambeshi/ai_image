@@ -1,0 +1,211 @@
+{% extends 'header.html' %}
+{% block header %}
+{% load humanize %}
+{% load user_agents %}
+
+{% load static %}
+
+{% block og_tags %}
+<title>ZIVSTER CHATBOT {{item.name}} | {{site_name}} </title>
+
+
+   <!-- Add Bootstrap CSS here (you can include it from a CDN) -->
+   <style>
+       /* Custom CSS for chat interface */
+     
+
+       .container_chat {
+           background-color: #ffffff;
+           box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+           border-radius: 10px;
+           padding: 20px;
+       }
+
+       h1 {
+           color: #333333;
+           text-align: center;
+       }
+
+       #chat {
+           max-height: 400px;
+           overflow-y: scroll;
+           padding: 10px;
+           border: 1px solid #ccc;
+           border-radius: 5px;
+       }
+
+       .chat-bubble {
+           max-width: 80%;
+           margin: 10px 0;
+           padding: 10px 20px;
+           border-radius: 20px;
+           font-size: 16px;
+       }
+
+       .user-bubble {
+           background-color: #007bff;
+           color: #fff;
+           float: right;
+       }
+
+       .assistant-bubble {
+           background-color: #4caf50;
+           color: #fff;
+           float: left;
+       }
+
+       .input-group {
+           margin-top: 20px;
+       }
+
+       #userInput {
+           border-radius: 30px;
+       }
+
+       #sendMessage {
+           border-radius: 30px;
+       }
+
+       /* Loading spinner styles */
+       .loading-spinner {
+           border: 4px solid rgba(255, 255, 255, 0.3);
+           border-radius: 50%;
+           border-top: 4px solid #007bff;
+           width: 20px;
+           height: 20px;
+           animation: spin 1s linear infinite;
+           display: none;
+           margin-right: 10px;
+       }
+
+       /* Analysis message styles */
+       .analysis-message {
+           color: #666;
+           text-align: center;
+           margin-bottom: 10px;
+           display: none; /* Initially hidden */
+       }
+
+       @keyframes spin {
+           0% { transform: rotate(0deg); }
+           100% { transform: rotate(360deg); }
+       }
+
+       /* Adjust chat bubble margins */
+       .user-bubble, .assistant-bubble {
+           margin-left: 20px;
+           margin-right: 20px;
+       }
+
+       /* Clearfix for chat bubbles */
+       .clearfix::after {
+           content: "";
+           display: table;
+           clear: both;
+       }
+   </style>
+
+
+{% endblock %}
+ 
+<section style="margin-top:100px;" >
+  
+    <div  class="container_chat container mt-5">
+        <h1>ZIVSTER AI CHATBOT</h1>
+        <div id="chat">
+            <!-- Initial Conversation -->
+            <div class="assistant-bubble chat-bubble"><b>ZIVSTER AI BOT</b>: Ask me anything you want, and I will assist you.</div>
+        </div>
+        <!-- Analysis message -->
+        <div class="analysis-message">Analysing your message for better response...</div>
+        <div class="input-group mt-3">
+            <input type="text" id="userInput" class="form-control" placeholder="Type your message...">
+            <button id="sendMessage" class="btn btn-primary">Send</button>
+            <!-- Loading spinner -->
+            <div class="loading-spinner"></div>
+        </div>
+    </div>
+    <!-- Add Bootstrap and jQuery scripts here (you can include them from CDNs) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <script>
+        // Function to toggle loading spinner and analysis message
+        function toggleLoadingSpinner(show) {
+            const loadingSpinner = document.querySelector('.loading-spinner');
+            const analysisMessage = document.querySelector('.analysis-message');
+            if (show) {
+                loadingSpinner.style.display = 'inline-block';
+                analysisMessage.style.display = 'block';
+            } else {
+                loadingSpinner.style.display = 'none';
+                analysisMessage.style.display = 'none';
+            }
+        }
+
+        // Function to add a message to the chat
+        function addMessage(role, content) {
+            const chat = document.getElementById('chat');
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('chat-bubble');
+            if (role === 'user') {
+                messageDiv.classList.add('user-bubble');
+                messageDiv.textContent = 'Me: ' + content;
+            } else {
+                messageDiv.classList.add('assistant-bubble');
+                messageDiv.textContent = 'ZIVSTER BOT: ' + content;
+            }
+            chat.appendChild(messageDiv);
+            // Add clearfix to ensure proper alignment
+            const clearfixDiv = document.createElement('div');
+            clearfixDiv.classList.add('clearfix');
+            chat.appendChild(clearfixDiv);
+            // Scroll to the bottom of the chat
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        // Function to send a message and get a response from the Django view
+        function sendMessage() {
+            const userInput = document.getElementById('userInput').value;
+
+            // Show the analysis message and loading spinner
+            toggleLoadingSpinner(true);
+
+            // Make an AJAX request to the Django view
+            $.ajax({
+                type: 'POST',
+                url: '{% url "tools:generate_response" %}', // Use Django URL template tag
+                data: {
+                    'user_message': userInput,
+                    csrfmiddlewaretoken: '{{ csrf_token }}'  // Add this for CSRF protection
+                },
+                success: function(response) {
+                    // Use response directly to get the assistant's reply
+                    addMessage('user', userInput); // Display user's message
+                    addMessage('assistant', response.response); // Display assistant's reply
+                    // Hide loading spinner
+                    toggleLoadingSpinner(false);
+                },
+                error: function(error) {
+                    // Hide loading spinner in case of an error
+                    toggleLoadingSpinner(false);
+                    console.error('Error:', error);
+                }
+            });
+
+            // Clear the user's input field
+            document.getElementById('userInput').value = '';
+        }
+
+        // Attach the sendMessage function to the button click event
+        document.getElementById('sendMessage').addEventListener('click', sendMessage);
+    </script>
+</div>
+</div></div></div>
+<div style="margin-top:150px;">
+    <hr>
+</div>
+</section>
+</section>
+{% include 'footer.html' %}
+  {% endblock  %}
